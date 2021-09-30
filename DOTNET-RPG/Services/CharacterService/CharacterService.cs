@@ -42,5 +42,51 @@ namespace DOTNET_RPG.Services.CharacterService
         {
             return new ServiceResponse<GetCharacterDto>() { Data = _mapper.Map<GetCharacterDto>(characters.Where(c => c.Id == id).First()) };
         }
+
+        public async Task<ServiceResponse<GetCharacterDto>> UpdateCharacter(UpdateCharacterDto updatedCharacter)
+        {
+            ServiceResponse<GetCharacterDto> serviceResponse = new ServiceResponse<GetCharacterDto>();
+
+            try
+            {
+                Character character = characters.First(c => c.Id == updatedCharacter.Id);
+                character.Name = updatedCharacter.Name;
+                character.Class = updatedCharacter.Class;
+                character.Defense = updatedCharacter.Defense;
+                character.HitPoints = updatedCharacter.HitPoints;
+                character.Intelligence = updatedCharacter.Intelligence;
+                character.Strength = updatedCharacter.Strength;
+
+                serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                serviceResponse.Success = false;
+                serviceResponse.Message = "Character not found";
+            }
+
+            return serviceResponse;
+        }
+
+        public async Task<ServiceResponse<List<GetCharacterDto>>> DeleteCharacter(int id)
+        {
+            ServiceResponse<List<GetCharacterDto>> serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
+
+            try
+            {
+                Character character = characters.First(c => c.Id == id);
+                characters.Remove(character);
+
+                serviceResponse.Data = (characters.Select(c => _mapper.Map<GetCharacterDto>(c))).ToList();
+            }
+            catch (InvalidOperationException ex)
+            {
+                serviceResponse.Success = false;
+                serviceResponse.Message = "Character not found";
+            }
+
+            return serviceResponse;
+        }
     }
 }
