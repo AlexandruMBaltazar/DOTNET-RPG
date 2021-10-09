@@ -1,5 +1,5 @@
 # DOTNET-RPG
-The back-end of a .NET Core web application with Web API, Entity Framework and SQL Server
+The back-end of a .NET Core web application with Web API, Entity Framework and SQL Server. The application represents an API for a web browser game.
 
 # What have I learned by doing this project
 * Build a .NET Core back-end with Web API, Entity Framework Core, SQL Server
