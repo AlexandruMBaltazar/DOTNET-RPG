@@ -39,6 +39,7 @@ namespace DOTNET_RPG
             services.AddAutoMapper(typeof(Startup));
 
             services.AddScoped<ICharacherService, CharacterService>();
+            services.AddScoped<IAuthRepository, AuthRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

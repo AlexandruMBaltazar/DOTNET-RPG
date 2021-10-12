@@ -18,7 +18,7 @@ namespace DOTNET_RPG.Data
 
         public async Task<ServiceResponse<int>> Register(User user, string password)
         {
-            ServiceResponse<int> serviceResponse = new ServiceResponse<int> { Data = user.Id };
+            ServiceResponse<int> serviceResponse = new ServiceResponse<int>();
 
             if (await UserExists(user.Username))
             {
@@ -35,6 +35,8 @@ namespace DOTNET_RPG.Data
 
             await _dataContext.Users.AddAsync(user);
             await _dataContext.SaveChangesAsync();
+
+            serviceResponse.Data = user.Id;
 
             return serviceResponse;
         }
