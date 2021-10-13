@@ -43,7 +43,26 @@ namespace DOTNET_RPG.Data
 
         public async Task<ServiceResponse<string>> Login(string username, string password)
         {
-            throw new NotImplementedException();
+            ServiceResponse<string> serviceResponse = new ServiceResponse<string>();
+
+            User user = await _dataContext.Users.FirstOrDefaultAsync(user => user.Username.ToLower().Equals(username));
+
+            if (user == null)
+            {
+                serviceResponse.Success = false;
+                serviceResponse.Message = "Authentication Failed";
+            } 
+            else if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            {
+                serviceResponse.Success = false;
+                serviceResponse.Message = "Authentication Failed";
+            }
+            else
+            {
+                serviceResponse.Data = user.Id.ToString();
+            }
+
+            return serviceResponse;
         }
 
         public async Task<bool> UserExists(string username)
@@ -61,6 +80,22 @@ namespace DOTNET_RPG.Data
             using var hmac = new System.Security.Cryptography.HMACSHA512();
             passwordSalt = hmac.Key;
             passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+        }
+
+        private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
+        {
+            using var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt);
+            var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+
+            for (int i = 0; i < computedHash.Length; i++)
+            {
+                if (computedHash[i] != passwordHash[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
