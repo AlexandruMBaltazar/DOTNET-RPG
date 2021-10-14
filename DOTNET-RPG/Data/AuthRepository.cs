@@ -1,19 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using DOTNET_RPG.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DOTNET_RPG.Data
 {
     public class AuthRepository : IAuthRepository
     {
         private readonly DataContext _dataContext;
+        private readonly IConfiguration _configuration;
 
-        public AuthRepository(DataContext dataContext)
+        public AuthRepository(DataContext dataContext, IConfiguration configuration)
         {
             _dataContext = dataContext;
+            _configuration = configuration;
         }
 
         public async Task<ServiceResponse<int>> Register(User user, string password)
@@ -59,7 +66,7 @@ namespace DOTNET_RPG.Data
             }
             else
             {
-                serviceResponse.Data = user.Id.ToString();
+                serviceResponse.Data = CreateToken(user);
             }
 
             return serviceResponse;
@@ -97,5 +104,40 @@ namespace DOTNET_RPG.Data
 
             return true;
         }
+
+        private string CreateToken(User user)
+        {
+
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+            };
+
+            SymmetricSecurityKey key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value)
+            );
+
+            SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            /*
+             * The security token descriptor acts like the body of the token contains:
+             * Subject: Claims
+             * Expires: The date when the token should expire
+             * SingingCredentials: Encrypted security token key defined in the config
+             */
+            SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(1),
+                SigningCredentials = credentials
+            };
+
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+
     }
 }
